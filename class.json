@@ -1,0 +1,72 @@
+[
+    {
+      "image": "https://i.ibb.co/SsgTXMP/sl.jpg",
+      "name": "Saxophone for Beginners",
+      "instructor": "Jennifer Thompson",
+      "availableSeats": 15,
+      "price": 2000
+    },
+    {
+      "image": "https://i.ibb.co/dGvdgrZ/bl.png",
+      "name": "Introduction to Bassoon",
+      "instructor": "Michael Collins",
+      "availableSeats": 8,
+      "price": 2500
+    },
+    {
+      "image": "https://i.ibb.co/znQg3B4/gl.jpg",
+      "name": "Guitar Masterclass",
+      "instructor": "David Roberts",
+      "availableSeats": 10,
+      "price": 3000
+    },
+    {
+      "image": "https://i.ibb.co/9hyKmCd/vl.jpg",
+      "name": "Violin Masterclass",
+      "instructor": "Alexandra Lee",
+      "availableSeats": 12,
+      "price": 1500
+    },
+    {
+      "image": "https://i.ibb.co/XC6gGhz/tl.png",
+      "name": "Introduction to Trumpet",
+      "instructor": "Emily Thompson",
+      "availableSeats": 5,
+      "price": 4000
+    },
+    {
+      "image": "https://i.ibb.co/8NTvq5y/pl.jpg",
+      "name": "Piano Lesson",
+      "instructor": "Sophie Nguyen",
+      "availableSeats": 20,
+      "price": 1800
+    },
+    {
+      "image": "https://i.ibb.co/6n4mMLT/dl.jpg",
+      "name": "Drumming Essentials",
+      "instructor": "Mark Davis",
+      "availableSeats": 7,
+      "price": 3000
+    },
+    {
+      "image": "https://i.ibb.co/cT6YJ7K/s1l.jpg",
+      "name": "Bassoon Techniques",
+      "instructor": "Jessica Ramirez",
+      "availableSeats": 4,
+      "price": 2500
+    },
+    {
+      "image": "https://i.ibb.co/TPBJXgK/vll.png",
+      "name": "Violin Masterclass",
+      "instructor": "Isabella Ramirez",
+      "availableSeats": 6,
+      "price": 3500
+    },
+    {
+      "image": "https://i.ibb.co/3dGVfFC/bll.png",
+      "name": "Introduction to Banjo",
+      "instructor": "Matthew Thompson",
+      "availableSeats": 10,
+      "price": 2000
+    }
+  ]
