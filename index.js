@@ -6,6 +6,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 app.use(cors());
 app.use(express.json())
 
@@ -48,6 +49,17 @@ async function run() {
     const reviewsCollection = client.db('jingleDb').collection('reviews')
     const selectedClassCollection = client.db('jingleDb').collection('selectedClass')
     const usersCollection = client.db('jingleDb').collection('users')
+    const paymentCollection = client.db('jingleDb').collection('payment')
+
+    const verifyStudent = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'student') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -190,6 +202,80 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc)
       res.send(result)
     })
+
+        // create payment intent
+        app.post('/create-payment-intent', verifyJWT, async(req,res) => {
+          const {price} = req.body;
+          const amount = parseInt(price * 100);
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount, 
+            currency: "usd",
+            payment_method_types: ['card']
+          })
+          res.send({
+            clientSecret: paymentIntent.client_secret
+          })
+        })
+    
+        // payment related API
+        app.post('/payments', verifyJWT, async(req, res) => {
+          const payment = req.body;
+          const insertResult = await paymentCollection.insertOne(payment);
+          
+          const query = {_id: { $in: payment.cardItems.map(id => new ObjectId(id))}}
+          const deleteResult = await cartCollection.deleteMany(query)
+          res.send({insertResult, deleteResult})
+        })
+    
+        app.get('/admin-stats', verifyJWT, verifyStudent,  async(req, res) => {
+          const users = await usersCollection.estimatedDocumentCount();
+          const classes = await classesCollection.estimatedDocumentCount();
+          const bookedClass = await  paymentCollection.estimatedDocumentCount()
+          
+          // best way to get sum of price field is to use group and sum operator
+          const payments = await paymentCollection.find().toArray();
+          const revenue = payments.reduce((sum, payment) => sum + payment.price,0)
+    
+          res.send({
+            revenue,
+            users,
+            classes,
+            bookedClass
+          })
+        })
+    
+        app.get('/order-stats', verifyJWT, verifyStudent, async(req, res) => {
+          const pipeline = [
+            {
+              $lookup: {
+                from: 'classes',
+                localField: 'allClasses',
+                foreignField: '_id',
+                as: 'allClassesData'
+              }
+            },
+            {
+              $unwind:'$allClassesData'
+            },
+            {
+              $group: {
+                _id: '$allClassesData.',
+                count: {$sum: 1},
+                totalPrice: { $sum:'$allClassesData.price'}
+              }
+            },
+            {
+              $project: {
+                category: '$_id',
+                count: 1,
+                total: { $round: ['$totalPrice', 2]},
+                _id: 0
+              }
+            }
+          ];
+          const result = await paymentCollection.aggregate(pipeline).toArray()
+          res.send(result)
+        })
 
 
     // Send a ping to confirm a successful connection
