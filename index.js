@@ -41,10 +41,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const instructorsCollection = client.db('jingleDb').collection('instructors')
     const classesCollection = client.db('jingleDb').collection('classes')
+    const reviewsCollection = client.db('jingleDb').collection('reviews')
 
     app.get('/instructors', async (req, res) => {
         const result = await instructorsCollection.find().toArray();
@@ -54,6 +55,11 @@ async function run() {
     app.get('/classes', async (req, res) => {
         const result = await classesCollection.find().toArray();
         res.send(result)
+    })
+
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewsCollection.find().toArray();
+      res.send(result)
     })
 
     app.post('/jwt', (req, res) => {
