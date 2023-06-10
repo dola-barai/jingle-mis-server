@@ -223,11 +223,11 @@ async function run() {
           const insertResult = await paymentCollection.insertOne(payment);
           
           const query = {_id: { $in: payment.cardItems.map(id => new ObjectId(id))}}
-          const deleteResult = await cartCollection.deleteMany(query)
+          const deleteResult = await selectedClassCollection.deleteMany(query)
           res.send({insertResult, deleteResult})
         })
     
-        app.get('/admin-stats', verifyJWT, verifyStudent,  async(req, res) => {
+        app.get('/student-stats', verifyJWT, verifyStudent,  async(req, res) => {
           const users = await usersCollection.estimatedDocumentCount();
           const classes = await classesCollection.estimatedDocumentCount();
           const bookedClass = await  paymentCollection.estimatedDocumentCount()
@@ -259,7 +259,7 @@ async function run() {
             },
             {
               $group: {
-                _id: '$allClassesData.',
+                _id: '$allClassesData.category',
                 count: {$sum: 1},
                 totalPrice: { $sum:'$allClassesData.price'}
               }
