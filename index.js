@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
@@ -64,13 +64,25 @@ async function run() {
         res.send(result)
     })
 
+
     app.get('/reviews', async (req, res) => {
       const result = await reviewsCollection.find().toArray();
       res.send(result)
     })
 
-    app.get('/selectedClass', async (req, res) => {
-      const result = await selectedClassCollection.find().toArray();
+    app.get('/selectedClass', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'Forbidden access' })
+      }
+
+      const query = { email: email }
+      const result = await selectedClassCollection.find(query).toArray()
       res.send(result)
     })
 
@@ -78,6 +90,13 @@ async function run() {
       const item = req.body;
       console.log(item);
       const result = await selectedClassCollection.insertOne(item)
+      res.send(result)
+    })
+
+    app.delete('/selectedClass/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedClassCollection.deleteOne(query);
       res.send(result)
     })
 
