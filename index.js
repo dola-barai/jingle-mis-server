@@ -47,6 +47,7 @@ async function run() {
     const classesCollection = client.db('jingleDb').collection('classes')
     const reviewsCollection = client.db('jingleDb').collection('reviews')
     const selectedClassCollection = client.db('jingleDb').collection('selectedClass')
+    const usersCollection = client.db('jingleDb').collection('users')
 
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -70,6 +71,11 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result)
+    })
+
     app.get('/selectedClass', verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
@@ -88,7 +94,6 @@ async function run() {
 
     app.post('/selectedClass', async (req, res) => {
       const item = req.body;
-      console.log(item);
       const result = await selectedClassCollection.insertOne(item)
       res.send(result)
     })
@@ -99,6 +104,45 @@ async function run() {
       const result = await selectedClassCollection.deleteOne(query);
       res.send(result)
     })
+
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+
+      const query = { email: user.email }
+      const existingUser = await usersCollection.findOne(query)
+
+      if (existingUser) {
+        return res.send({ message: 'user already exist' })
+      }
+      const result = await usersCollection.insertOne(user)
+      res.send(result)
+    })
+
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      const result = { admin: user?.role === 'admin' }
+      res.send(result)
+    })
+
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
