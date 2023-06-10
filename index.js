@@ -46,6 +46,13 @@ async function run() {
     const instructorsCollection = client.db('jingleDb').collection('instructors')
     const classesCollection = client.db('jingleDb').collection('classes')
     const reviewsCollection = client.db('jingleDb').collection('reviews')
+    const selectedClassCollection = client.db('jingleDb').collection('selectedClass')
+
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      res.send({ token })
+    })
 
     app.get('/instructors', async (req, res) => {
         const result = await instructorsCollection.find().toArray();
@@ -62,10 +69,16 @@ async function run() {
       res.send(result)
     })
 
-    app.post('/jwt', (req, res) => {
-      const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-      res.send({ token })
+    app.get('/selectedClass', async (req, res) => {
+      const result = await selectedClassCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.post('/selectedClass', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await selectedClassCollection.insertOne(item)
+      res.send(result)
     })
 
     // Send a ping to confirm a successful connection
