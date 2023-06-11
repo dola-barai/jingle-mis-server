@@ -50,6 +50,7 @@ async function run() {
     const selectedClassCollection = client.db('jingleDb').collection('selectedClass')
     const usersCollection = client.db('jingleDb').collection('users')
     const paymentCollection = client.db('jingleDb').collection('payment')
+    const addClassCollection = client.db('jingleDb').collection('newClass')
 
     const verifyStudent = async (req, res, next) => {
       const email = req.decoded.email;
@@ -88,6 +89,11 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/newClass', async (req, res) => {
+      const result = await addClassCollection.find().toArray();
+      res.send(result)
+    })
+
     app.get('/payments', verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
@@ -120,6 +126,15 @@ async function run() {
       res.send(result)
     })
 
+    app.post('/newClass', async (req, res) => {
+      const newClass = req.body;
+      
+      const result = await addClassCollection.insertOne(newClass)
+      
+      res.send(result)
+      console.log(result);
+    })
+
     app.post('/selectedClass', async (req, res) => {
       const item = req.body;
       const result = await selectedClassCollection.insertOne(item)
@@ -134,6 +149,7 @@ async function run() {
     })
 
 
+
     app.post('/users', async (req, res) => {
       const user = req.body;
 
@@ -146,6 +162,8 @@ async function run() {
       const result = await usersCollection.insertOne(user)
       res.send(result)
     })
+
+
 
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -219,6 +237,18 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/newClass/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Approve'
+        },
+      }
+      const result = await addClassCollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+
     // create payment intent
     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
@@ -239,82 +269,28 @@ async function run() {
         const payment = req.body;
         const insertResult = await paymentCollection.insertOne(payment);
         let query = {}; // Declare the query variable with a default value
-
+    
         if (Array.isArray(payment.cartItemId)) {
           query = { _id: { $in: payment.cartItemId.map(id => new ObjectId(id)) } };
         }
-
+    
         const deleteResult = await selectedClassCollection.deleteMany(query);
         const classUpdate = {
           $inc: {
             availableSeats: -1,
-            enrolledStudents: +1
+            enrolledStudents: 1 // Remove the '+' sign, as it is not needed
           }
         };
-
+    
         const updateResult = await classesCollection.updateMany(query, classUpdate);
-
+    
         res.send({ insertResult, deleteResult, updateResult });
       } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
       }
     });
-
-
-
-    app.get('/student-stats', verifyJWT, verifyStudent, async (req, res) => {
-      const users = await usersCollection.estimatedDocumentCount();
-      const classes = await classesCollection.estimatedDocumentCount();
-      const bookedClass = await paymentCollection.estimatedDocumentCount()
-
-      // best way to get sum of price field is to use group and sum operator
-      const payments = await paymentCollection.find().toArray();
-      const revenue = payments.reduce((sum, payment) => sum + payment.price, 0)
-
-      res.send({
-        revenue,
-        users,
-        classes,
-        bookedClass
-      })
-    })
-
-    app.get('/order-stats', verifyJWT, verifyStudent, async (req, res) => {
-      const pipeline = [
-        {
-          $match: query
-        },
-        {
-          $lookup: {
-            from: 'classes',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'classData'
-          }
-        },
-        {
-          $unwind: '$classData'
-        },
-        {
-          $project: {
-            _id: 0,
-            className: '$classData.name',
-            instructor: '$classData.instructor',
-            image: '$classData.image',
-
-          }
-        }
-      ];
-  
-      const paymentDetails = await paymentCollection.aggregate(pipeline).toArray();
-  
-      res.send(paymentDetails);
-    });
- 
- 
-
-
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
