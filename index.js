@@ -237,6 +237,32 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/newClass/:id', async(req, res) => {
+      const _id = req.params.id;
+      const query = { _id: new ObjectId(_id) }
+      const result = await addClassCollection.findOne(query);
+      res.send(result)
+      console.log(result);
+    });
+
+    app.put('/newClass/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = { upsert: true };
+      const updateClass = req.body;
+
+      const nClass = {
+          $set: {
+              cname: updateClass.cname, 
+              price: updateClass.price, 
+              seats: updateClass.seats, 
+          }
+      }
+
+      const result = await addClassCollection.updateOne(filter, nClass, options);
+      res.send(result);
+  })
+
     app.patch('/newClass/approve/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
