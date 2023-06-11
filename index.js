@@ -237,12 +237,24 @@ async function run() {
       res.send(result)
     })
 
-    app.patch('/newClass/:id', async (req, res) => {
+    app.patch('/newClass/approve/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           role: 'Approve'
+        },
+      }
+      const result = await addClassCollection.updateOne(filter, updateDoc)
+      res.send(result)
+    })
+
+    app.patch('/newClass/reject/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Reject'
         },
       }
       const result = await addClassCollection.updateOne(filter, updateDoc)
