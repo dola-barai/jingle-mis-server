@@ -52,11 +52,11 @@ async function run() {
     const paymentCollection = client.db('jingleDb').collection('payment')
     const addClassCollection = client.db('jingleDb').collection('newClass')
 
-    const verifyStudent = async (req, res, next) => {
+    const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
       const user = await usersCollection.findOne(query);
-      if (user?.role !== 'student') {
+      if (user?.role !== 'admin') {
         return res.status(403).send({ error: true, message: 'forbidden message' });
       }
       next();
@@ -126,14 +126,6 @@ async function run() {
       res.send(result)
     })
 
-    app.post('/newClass', async (req, res) => {
-      const newClass = req.body;
-      
-      const result = await addClassCollection.insertOne(newClass)
-      
-      res.send(result)
-      console.log(result);
-    })
 
     app.post('/selectedClass', async (req, res) => {
       const item = req.body;
@@ -164,6 +156,12 @@ async function run() {
     })
 
 
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result)
+    })
 
     app.get('/users/admin/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -201,7 +199,7 @@ async function run() {
       res.send(result)
     })
 
-    app.patch('/users/admin/:id', async (req, res) => {
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -213,7 +211,7 @@ async function run() {
       res.send(result)
     })
 
-    app.patch('/users/instructor/:id', async (req, res) => {
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -225,7 +223,7 @@ async function run() {
       res.send(result)
     })
 
-    app.patch('/users/student/:id', async (req, res) => {
+    app.patch('/users/student/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -244,6 +242,15 @@ async function run() {
       res.send(result)
       console.log(result);
     });
+
+    app.post('/newClass', async (req, res) => {
+      const newClass = req.body;
+      
+      const result = await addClassCollection.insertOne(newClass)
+      
+      res.send(result)
+      console.log(result);
+    })
 
     app.put('/newClass/:id', async(req, res) => {
       const id = req.params.id;
