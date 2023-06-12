@@ -94,6 +94,22 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/newClassIns', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        res.send([]);
+      }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'Forbidden access' })
+      }
+
+      const query = { email: email }
+      const result = await addClassCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.get('/payments', verifyJWT, async (req, res) => {
       const email = req.query.email;
       if (!email) {
